@@ -4,6 +4,7 @@ import type { Meta } from "@/lib/cinemeta";
 import { ProviderLogo } from "@/components/ai-provider-logo";
 import { modelLabelFor, providerForModel } from "@/lib/ai-models";
 import { aiFindEpisodes, type EpisodeCandidate } from "@/lib/ai-episode-search";
+import { episodeAiKey } from "@/lib/ai-chat-request";
 import { useLocalAwareSeriesPlay } from "@/lib/local-library/use-series-play";
 import { useSettings } from "@/lib/settings";
 import { useT } from "@/lib/i18n";
@@ -58,7 +59,14 @@ export function EpisodeAiMode({
     setFellBack(false);
     setRanQuery(q);
     try {
-      const refs = await aiFindEpisodes(settings.aiSearchKey, settings.aiSearchModel, meta.name, candidates, q);
+      const refs = await aiFindEpisodes(
+        episodeAiKey(settings),
+        settings.aiSearchModel,
+        meta.name,
+        candidates,
+        q,
+        settings.aiLitellmUrl,
+      );
       const found: Video[] = [];
       for (const r of refs) {
         const v = videos?.find((x) => x.season === r.season && x.episode === r.episode);

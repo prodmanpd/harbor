@@ -281,6 +281,8 @@ export type Settings = {
   aiSearchKey: string;
   aiSearchModel: string;
   aiGroqKey: string;
+  aiLitellmUrl: string;
+  aiLitellmKey: string;
   jinaKey: string;
   aiWebSearch: boolean;
   playerD3d11Flip: boolean;

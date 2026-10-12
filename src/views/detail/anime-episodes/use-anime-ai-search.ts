@@ -7,6 +7,7 @@ export function useAnimeAiSearch(
   episodes: KitsuEpisode[],
   key: string,
   model: string,
+  litellmUrl = "",
 ) {
   const [status, setStatus] = useState<"idle" | "loading" | "done">("idle");
   const [matched, setMatched] = useState<Set<number> | null>(null);
@@ -22,7 +23,7 @@ export function useAnimeAiSearch(
       overview: e.synopsis,
     }));
     try {
-      const refs = await aiFindEpisodes(key, model, showName, candidates, q);
+      const refs = await aiFindEpisodes(key, model, showName, candidates, q, litellmUrl);
       const nums = new Set<number>();
       for (const r of refs) {
         const ep = episodes.find(

@@ -243,6 +243,8 @@ export const DEFAULT: Settings = {
   aiSearchKey: "",
   aiSearchModel: "",
   aiGroqKey: "",
+  aiLitellmUrl: "",
+  aiLitellmKey: "",
   jinaKey: "",
   aiWebSearch: false,
   playerD3d11Flip: true,

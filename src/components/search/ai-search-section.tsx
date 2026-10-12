@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useSettings } from "@/lib/settings";
 import { useT } from "@/lib/i18n";
-import { keyForProvider, modelLabelFor, providerForModel } from "@/lib/ai-models";
+import { aiProviderReady, modelLabelFor, providerForModel } from "@/lib/ai-models";
 import { AiResultList } from "./ai-search/ai-result-list";
 import { useAiSuggest } from "./ai-search/use-ai-suggest";
 import { AiSuggestButton } from "./ai-search/ai-suggest-button";
@@ -31,7 +31,7 @@ export function AiSearchSection({
   }, [active, onActive]);
 
   const provider = providerForModel(settings.aiSearchModel);
-  if (!keyForProvider(settings, provider).trim() || !query.trim()) return null;
+  if (!aiProviderReady(settings, provider) || !query.trim()) return null;
 
   const label = modelLabelFor(settings.aiSearchModel);
   const shortQ = query.trim().length > 26 ? `${query.trim().slice(0, 25)}…` : query.trim();
@@ -51,7 +51,9 @@ export function AiSearchSection({
     <div className="mb-8">
       {status === "idle" && <AiSuggestButton query={query} provider={provider} onRun={run} />}
 
-      {status === "loading" && <AiThinking provider={provider} label={label} phrases={thinkingPhrases} />}
+      {status === "loading" && (
+        <AiThinking provider={provider} label={label} phrases={thinkingPhrases} />
+      )}
 
       {status === "error" && (
         <button

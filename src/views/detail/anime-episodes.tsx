@@ -37,6 +37,7 @@ import { pickTvdbImage } from "@/lib/providers/tvdb-proxy";
 import { TvdbOrderPanel } from "./series-episodes/tvdb-order-panel";
 import { parseKitsuId } from "@/lib/providers/kitsu";
 import { providerForModel } from "@/lib/ai-models";
+import { episodeAiKey, episodeAiReady } from "@/lib/ai-chat-request";
 
 const WINDOW_STEP = 60;
 
@@ -241,8 +242,9 @@ export function AnimeEpisodes({
   const ai = useAnimeAiSearch(
     meta.name,
     displayEpisodes,
-    settings.aiSearchKey,
+    episodeAiKey(settings),
     settings.aiSearchModel,
+    settings.aiLitellmUrl,
   );
   const filteredEpisodes = useMemo(() => {
     if (aiMode && ai.matched) return displayEpisodes.filter((e) => ai.matched!.has(e.number));
@@ -351,7 +353,7 @@ export function AnimeEpisodes({
               <EpisodeSearchToggle
                 searchActive={searchOpen || query.trim().length > 0}
                 aiMode={aiMode}
-                aiEnabled={!!settings.aiSearchKey.trim()}
+                aiEnabled={episodeAiReady(settings)}
                 aiProvider={aiProvider}
                 onSearch={() => {
                   setSearchOpen((v) => !v);

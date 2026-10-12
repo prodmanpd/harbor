@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { EpisodeJumper } from "@/components/episode-jumper";
 import { providerForModel } from "@/lib/ai-models";
+import { episodeAiReady } from "@/lib/ai-chat-request";
 import { CrossSeasonResults } from "./series-episodes/cross-season-results";
 import { CinemetaFallback } from "./series-episodes/cinemeta-fallback";
 import { EpisodeAiMode } from "./series-episodes/episode-ai-mode";
@@ -292,7 +293,7 @@ export function SeriesEpisodes({
           <EpisodeSearchToggle
             searchActive={searchOpen || searching}
             aiMode={aiMode}
-            aiEnabled={!!settings.aiSearchKey.trim()}
+            aiEnabled={episodeAiReady(settings)}
             aiProvider={aiProvider}
             onSearch={() => {
               setSearchOpen((v) => !v);

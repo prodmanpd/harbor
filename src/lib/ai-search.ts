@@ -1,9 +1,7 @@
 import { searchCinemeta } from "./search";
-import { DEFAULT_AI_MODEL, migrateModelId, providerForModel } from "./ai-models";
 import type { Meta } from "./cinemeta";
+import { buildChatRequest, chatEndpointForModel } from "./ai-chat-request";
 
-const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const MAX_SUGGESTIONS = 12;
 
 export type AiSuggestion = {
@@ -23,41 +21,30 @@ export type AiResult = {
 };
 
 const SYSTEM_PROMPT =
-  "You are a film and TV discovery engine for a media app. The user describes what they want to watch in natural language. Reply with ONLY a JSON array (no prose, no markdown code fences) of up to 12 specific, real movies or TV shows that best match, most relevant first. Each element is an object: {\"title\": string, \"year\": number, \"type\": \"movie\" or \"series\"}. If the user is clearly asking about a SPECIFIC EPISODE (by plot, scene, character, quote, or meme, for example 'the south park episode with kanye west'), return that show as the first result and add its \"season\" and \"episode\" numbers plus \"episodeTitle\", like {\"title\": \"South Park\", \"type\": \"series\", \"season\": 13, \"episode\": 5, \"episodeTitle\": \"Fishsticks\"}. Use your own knowledge of the show to pick the exact episode. Use the original or most internationally recognized title. Never repeat a title. When live web context is provided below, treat it as authoritative ground truth for fact-grounded queries (people's filmographies, box office, recency, regional titles, memes, current seasons/episodes) — use it as your primary source and cite the exact title/year it mentions rather than guessing from training data.";
+  'You are a film and TV discovery engine for a media app. The user describes what they want to watch in natural language. Reply with ONLY a JSON array (no prose, no markdown code fences) of up to 12 specific, real movies or TV shows that best match, most relevant first. Each element is an object: {"title": string, "year": number, "type": "movie" or "series"}. If the user is clearly asking about a SPECIFIC EPISODE (by plot, scene, character, quote, or meme, for example \'the south park episode with kanye west\'), return that show as the first result and add its "season" and "episode" numbers plus "episodeTitle", like {"title": "South Park", "type": "series", "season": 13, "episode": 5, "episodeTitle": "Fishsticks"}. Use your own knowledge of the show to pick the exact episode. Use the original or most internationally recognized title. Never repeat a title. When live web context is provided below, treat it as authoritative ground truth for fact-grounded queries (people\'s filmographies, box office, recency, regional titles, memes, current seasons/episodes) — use it as your primary source and cite the exact title/year it mentions rather than guessing from training data.';
 
 export async function aiSuggest(
   key: string,
   model: string,
   query: string,
   webContext?: string,
+  litellmUrl = "",
 ): Promise<AiSuggestion[]> {
   const q = query.trim();
-  if (!key.trim() || !q) return [];
-  const isGroq = providerForModel(model) === "groq";
-  const url = isGroq ? GROQ_URL : OPENROUTER_URL;
-  const headers: Record<string, string> = {
-    Authorization: `Bearer ${key.trim()}`,
-    "Content-Type": "application/json",
-  };
-  if (!isGroq) {
-    headers["HTTP-Referer"] = "https://harbor.site";
-    headers["X-Title"] = "Harbor";
-  }
+  const endpoint = chatEndpointForModel(model);
+  if (!q || (endpoint !== "litellm" && !key.trim())) return [];
   const systemPrompt = webContext?.trim()
     ? `${SYSTEM_PROMPT}\n\nLive web context for this query (use it when relevant, fall back to your own knowledge otherwise):\n${webContext}`
     : SYSTEM_PROMPT;
-  const res = await fetch(url, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      model: migrateModelId(model.trim()) || DEFAULT_AI_MODEL,
-      temperature: 0.4,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: q },
-      ],
-    }),
-  });
+  const body = {
+    temperature: 0.4,
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: q },
+    ],
+  };
+  const request = buildChatRequest(endpoint, key, model, body, litellmUrl);
+  const res = await fetch(request.url, request.init);
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
     throw new Error(`AI search failed (${res.status}). ${detail.slice(0, 160)}`);
@@ -120,9 +107,13 @@ function parseSuggestions(content: string): AiSuggestion[] {
     const season =
       typeof o.season === "number" && Number.isFinite(o.season) ? Math.round(o.season) : undefined;
     const episode =
-      typeof o.episode === "number" && Number.isFinite(o.episode) ? Math.round(o.episode) : undefined;
+      typeof o.episode === "number" && Number.isFinite(o.episode)
+        ? Math.round(o.episode)
+        : undefined;
     const episodeTitle =
-      typeof o.episodeTitle === "string" && o.episodeTitle.trim() ? o.episodeTitle.trim() : undefined;
+      typeof o.episodeTitle === "string" && o.episodeTitle.trim()
+        ? o.episodeTitle.trim()
+        : undefined;
     out.push({ title, year, type, season, episode, episodeTitle });
     if (out.length >= MAX_SUGGESTIONS) break;
   }

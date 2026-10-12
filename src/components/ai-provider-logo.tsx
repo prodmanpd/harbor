@@ -3,6 +3,7 @@ import anthropicLogo from "@/assets/ai-logos/anthropic.png";
 import deepseekLogo from "@/assets/ai-logos/deepseek.png";
 import geminiLogo from "@/assets/ai-logos/gemini.png";
 import groqLogo from "@/assets/ai-logos/groq.png";
+import litellmLogo from "@/assets/ai-logos/litellm.png";
 import metaLogo from "@/assets/ai-logos/meta.png";
 import mistralLogo from "@/assets/ai-logos/mistral.png";
 import moonshotLogo from "@/assets/ai-logos/moonshot.ico";
@@ -22,6 +23,7 @@ export const AI_LOGOS: Record<AiProvider | "openrouter", string> = {
   qwen: qwenLogo,
   moonshot: moonshotLogo,
   groq: groqLogo,
+  litellm: litellmLogo,
   openrouter: openrouterLogo,
 };
 

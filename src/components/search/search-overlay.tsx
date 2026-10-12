@@ -21,6 +21,7 @@ import { AiSearchSection } from "./ai-search-section";
 import { AiModeButton } from "./ai-mode-button";
 import { AiExampleHint, SEARCH_EXAMPLES } from "@/components/ai-example-hint";
 import { useSettings } from "@/lib/settings";
+import { anyAiProviderReady } from "@/lib/ai-models";
 import { isMagnetInput, isDirectVideoUrl } from "@/lib/torrent/magnet";
 import { getSearchDisplayState } from "@/lib/search-display-state";
 
@@ -191,7 +192,7 @@ export function SearchOverlay() {
             <Loader2 size={18} className="shrink-0 animate-spin text-ink-subtle" />
           )}
           <Hint />
-          {(settings.aiSearchKey.trim() || settings.aiGroqKey.trim()) && (
+          {anyAiProviderReady(settings) && (
             <AiModeButton
               active={aiMode}
               currentModel={settings.aiSearchModel}

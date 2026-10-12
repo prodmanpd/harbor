@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { aiSuggest, resolveAiSuggestions, type AiResult } from "@/lib/ai-search";
 import { useSettings } from "@/lib/settings";
 import { useT } from "@/lib/i18n";
-import { keyForProvider, providerForModel } from "@/lib/ai-models";
+import { aiProviderReady, keyForProvider, providerForModel } from "@/lib/ai-models";
 import { enrichWithContent } from "@/lib/jina-search";
 
 export type AiStatus = "idle" | "loading" | "done" | "error";
@@ -26,9 +26,10 @@ export function useAiSuggest(query: string, runSignal = 0) {
 
   const provider = providerForModel(settings.aiSearchModel);
   const activeKey = keyForProvider(settings, provider);
+  const ready = aiProviderReady(settings, provider);
 
   useEffect(() => {
-    if (!runSignal || !query.trim() || !activeKey.trim()) return;
+    if (!runSignal || !query.trim() || !ready) return;
     void run();
   }, [runSignal]);
 
@@ -47,7 +48,13 @@ export function useAiSuggest(query: string, runSignal = 0) {
           webContext = undefined;
         }
       }
-      const suggestions = await aiSuggest(activeKey, settings.aiSearchModel, query, webContext);
+      const suggestions = await aiSuggest(
+        activeKey,
+        settings.aiSearchModel,
+        query,
+        webContext,
+        settings.aiLitellmUrl,
+      );
       if (id !== reqRef.current) return;
       if (suggestions.length === 0) {
         setResults([]);

@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { AI_MODELS, GROQ_MODELS, PROVIDER_NAME, providerForModel } from "@/lib/ai-models";
+import {
+  AI_MODELS,
+  GROQ_MODELS,
+  modelLabelFor,
+  PROVIDER_NAME,
+  providerForModel,
+  type AiModel,
+} from "@/lib/ai-models";
 import { ProviderLogo } from "@/components/ai-provider-logo";
 import { HoverTooltip } from "@/components/hover-tooltip";
 import { useT } from "@/lib/i18n";
@@ -23,6 +30,11 @@ export function AiModeButton({
   const heldRef = useRef(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const provider = providerForModel(currentModel);
+  // A LiteLLM model comes from the user's proxy, not the built-in lists; keep it visible.
+  const models: AiModel[] =
+    provider === "litellm"
+      ? [{ id: currentModel, label: modelLabelFor(currentModel), provider }, ...ALL_MODELS]
+      : ALL_MODELS;
 
   useEffect(() => {
     if (!open) return;
@@ -85,7 +97,7 @@ export function AiModeButton({
             {t("AI model")}
           </div>
           <div className="max-h-[320px] overflow-y-auto">
-            {ALL_MODELS.map((m) => {
+            {models.map((m) => {
               const on = m.id === currentModel;
               return (
                 <button
